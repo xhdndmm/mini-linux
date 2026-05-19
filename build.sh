@@ -191,68 +191,31 @@ echo "==> generate config"
 
 make defconfig
 
-############################################################
-# EFI
-############################################################
-
 scripts/config --enable EFI
 scripts/config --enable EFI_STUB
-
-############################################################
-# initramfs
-############################################################
-
+scripts/config --enable EFI_ZBOOT
+scripts/config --enable RELOCATABLE
+scripts/config --enable X86_X2APIC
+scripts/config --enable FB_EFI
+scripts/config --enable SYSFB
+scripts/config --enable DRM_SIMPLEDRM
+scripts/config --enable FRAMEBUFFER_CONSOLE
 scripts/config --enable BLK_DEV_INITRD
 scripts/config --set-str INITRAMFS_SOURCE "${WORK}/rootfs"
-
-############################################################
-# console
-############################################################
-
 scripts/config --enable VT
 scripts/config --enable VT_CONSOLE
 scripts/config --enable UNIX
 scripts/config --enable TTY
-
-############################################################
-# devtmpfs
-############################################################
-
 scripts/config --enable DEVTMPFS
 scripts/config --enable DEVTMPFS_MOUNT
-
-############################################################
-# filesystems
-############################################################
-
 scripts/config --enable TMPFS
 scripts/config --enable TMPFS_POSIX_ACL
-
-############################################################
-# executable support
-############################################################
-
 scripts/config --enable BINFMT_ELF
 scripts/config --enable BINFMT_SCRIPT
-
-############################################################
-# serial console
-############################################################
-
 scripts/config --enable SERIAL_8250
 scripts/config --enable SERIAL_8250_CONSOLE
-
-############################################################
-# embedded
-############################################################
-
 scripts/config --enable EXPERT
 scripts/config --enable EMBEDDED
-
-############################################################
-# smaller kernel
-############################################################
-
 scripts/config --disable DEBUG_INFO
 scripts/config --disable DEBUG_KERNEL
 scripts/config --disable MODULES
@@ -260,15 +223,8 @@ scripts/config --disable KALLSYMS
 scripts/config --disable BPF
 scripts/config --disable SYSTEM_TRUSTED_KEYS
 scripts/config --disable SYSTEM_REVOCATION_KEYS
-
-############################################################
-# builtin cmdline
-############################################################
-
 scripts/config --enable CMDLINE_BOOL
-
-scripts/config --set-str CMDLINE \
-"console=ttyS0 console=tty1 loglevel=3 rdinit=/init"
+scripts/config --set-str CMDLINE console=ttyS0 console=tty1 earlyprintk=efi,keep rdinit=/init
 
 ############################################################
 # finalize config
