@@ -274,7 +274,7 @@ scripts/config --set-str CMDLINE \
 # finalize config
 ############################################################
 
-yes "" | make oldconfig
+make oldconfig
 
 ############################################################
 # build kernel
