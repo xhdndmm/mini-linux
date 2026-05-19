@@ -1,0 +1,31 @@
+name: build-efi
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+
+    permissions:
+      contents: write
+
+    steps:
+      - name: checkout
+        uses: actions/checkout@v6
+
+      - name: build
+        run: chmod +x build.sh && ./build.sh
+
+      - name: generate tag
+        id: tag
+        run: |
+          echo "tag=build-$(date +%Y%m%d-%H%M%S)" >> $GITHUB_OUTPUT
+
+      - name: release
+        uses: softprops/action-gh-release@v3
+        with:
+          tag_name: ${{ steps.tag.outputs.tag }}
+          name: EFI Build ${{ steps.tag.outputs.tag }}
+          files: |
+            out/BOOTX64.EFI
