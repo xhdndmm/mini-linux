@@ -195,42 +195,50 @@ scripts/config --enable EFI
 scripts/config --enable EFI_STUB
 scripts/config --enable EFI_ZBOOT
 scripts/config --enable RELOCATABLE
-scripts/config --enable X86_X2APIC
+
 scripts/config --enable FB_EFI
 scripts/config --enable SYSFB
 scripts/config --enable DRM_SIMPLEDRM
 scripts/config --enable FRAMEBUFFER_CONSOLE
+
 scripts/config --enable BLK_DEV_INITRD
 scripts/config --set-str INITRAMFS_SOURCE "${WORK}/rootfs"
+
 scripts/config --enable VT
 scripts/config --enable VT_CONSOLE
 scripts/config --enable UNIX
 scripts/config --enable TTY
+
 scripts/config --enable DEVTMPFS
 scripts/config --enable DEVTMPFS_MOUNT
+
 scripts/config --enable TMPFS
 scripts/config --enable TMPFS_POSIX_ACL
+
 scripts/config --enable BINFMT_ELF
 scripts/config --enable BINFMT_SCRIPT
+
 scripts/config --enable SERIAL_8250
 scripts/config --enable SERIAL_8250_CONSOLE
-scripts/config --enable EXPERT
-scripts/config --enable EMBEDDED
-scripts/config --disable DEBUG_INFO
-scripts/config --disable DEBUG_KERNEL
+
+scripts/config --enable PRINTK
+scripts/config --enable EARLY_PRINTK
+
+scripts/config --enable CMDLINE_BOOL
+
+scripts/config --set-str CMDLINE \
+"console=ttyS0 console=tty1 earlyprintk=efi,keep rdinit=/init"
+
+scripts/config --set-str SYSTEM_TRUSTED_KEYS ""
+scripts/config --set-str SYSTEM_REVOCATION_KEYS ""
+
+scripts/config --enable DEBUG_INFO_NONE
+
 scripts/config --disable MODULES
 scripts/config --disable KALLSYMS
 scripts/config --disable BPF
-scripts/config --disable SYSTEM_TRUSTED_KEYS
-scripts/config --disable SYSTEM_REVOCATION_KEYS
-scripts/config --enable CMDLINE_BOOL
-scripts/config --set-str CMDLINE console=ttyS0 console=tty1 earlyprintk=efi,keep rdinit=/init
 
-############################################################
-# finalize config
-############################################################
-
-make oldconfig
+make olddefconfig
 
 ############################################################
 # build kernel
