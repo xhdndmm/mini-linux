@@ -123,9 +123,7 @@ make -j"${JOBS}"
 
 echo "==> create rootfs"
 
-mkdir -p "${WORK}/rootfs"/{
-bin,sbin,etc,proc,sys,dev,tmp,usr/bin,usr/sbin
-}
+mkdir -p "${WORK}/rootfs"/{bin,sbin,etc,proc,sys,dev,tmp,usr/bin,usr/sbin}
 
 ############################################################
 # install busybox
