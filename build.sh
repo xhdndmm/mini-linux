@@ -145,6 +145,7 @@ cat > "${WORK}/rootfs/init" <<'EOF'
 mount -t devtmpfs devtmpfs /dev
 mount -t proc proc /proc
 mount -t sysfs sysfs /sys
+mount -t tmpfs tmpfs /tmp
 
 echo
 echo "=================================="
@@ -153,7 +154,9 @@ echo " https://github.com/xhdndmm/mini-linux "
 echo "=================================="
 echo
 
-exec /bin/sh
+uname -a
+
+exec setsid cttyhack /bin/sh
 EOF
 
 chmod +x "${WORK}/rootfs/init"
@@ -187,9 +190,44 @@ cd "${WORK}/linux-${KERNEL_VERSION}"
 # kernel config
 ############################################################
 
-echo "==> generate config"
-
 make defconfig
+
+scripts/config --enable EFI
+scripts/config --enable EFI_STUB
+
+scripts/config --enable BLK_DEV_INITRD
+
+scripts/config --enable DEVTMPFS
+scripts/config --enable DEVTMPFS_MOUNT
+
+scripts/config --enable TMPFS
+scripts/config --enable TMPFS_POSIX_ACL
+
+scripts/config --enable BINFMT_ELF
+scripts/config --enable UNIX
+
+scripts/config --enable TTY
+scripts/config --enable VT
+scripts/config --enable VT_CONSOLE
+
+scripts/config --enable SERIAL_8250
+scripts/config --enable SERIAL_8250_CONSOLE
+
+echo "==> pack initramfs"
+
+cd "${WORK}/rootfs"
+
+find . -print0 \
+| cpio --null -ov --format=newc \
+| gzip -9 \
+> "${WORK}/initramfs.cpio.gz"
+
+cd "${WORK}/linux-${KERNEL_VERSION}"
+
+scripts/config \
+    --set-str INITRAMFS_SOURCE "${WORK}/initramfs.cpio.gz"
+
+make olddefconfig
 
 ############################################################
 # build kernel
