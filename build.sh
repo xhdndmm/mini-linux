@@ -196,6 +196,7 @@ scripts/config --enable EFI
 scripts/config --enable EFI_STUB
 
 scripts/config --enable BLK_DEV_INITRD
+scripts/config --enable RD_GZIP
 
 scripts/config --enable DEVTMPFS
 scripts/config --enable DEVTMPFS_MOUNT
@@ -204,11 +205,17 @@ scripts/config --enable TMPFS
 scripts/config --enable TMPFS_POSIX_ACL
 
 scripts/config --enable BINFMT_ELF
+scripts/config --enable BINFMT_SCRIPT
 scripts/config --enable UNIX
 
 scripts/config --enable TTY
 scripts/config --enable VT
 scripts/config --enable VT_CONSOLE
+
+scripts/config --enable FRAMEBUFFER
+scripts/config --enable FB_EFI
+scripts/config --enable FRAMEBUFFER_CONSOLE
+scripts/config --enable FONT_SUPPORT
 
 scripts/config --enable SERIAL_8250
 scripts/config --enable SERIAL_8250_CONSOLE
@@ -221,6 +228,9 @@ find . -print0 \
 | cpio --null -ov --format=newc \
 | gzip -9 \
 > "${WORK}/initramfs.cpio.gz"
+
+echo "==> verify initramfs contents"
+zcat "${WORK}/initramfs.cpio.gz" | cpio -t | grep -E '(init|bin/busybox|bin/sh)' || echo "Warning: init or busybox not found in initramfs"
 
 cd "${WORK}/linux-${KERNEL_VERSION}"
 
@@ -276,8 +286,3 @@ echo
 echo "========================================"
 echo " BUILD SUCCESS"
 echo "========================================"
-
-echo
-echo "EFI:"
-echo "${OUT}/BOOTX64.EFI"
-echo
