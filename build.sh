@@ -17,18 +17,18 @@ KERNEL_URL="https://cdn.kernel.org/pub/linux/kernel/v6.x/${KERNEL_TAR}"
 BUSYBOX_TAR="busybox-${BUSYBOX_VERSION}.tar.bz2"
 BUSYBOX_URL="https://busybox.net/downloads/${BUSYBOX_TAR}"
 
-CMDLINE='console=tty0 console=ttyS0,115200n8 loglevel=7 init=/init'
-
-echo "==> clean"
-rm -rf "${WORK}" "${OUT}"
-mkdir -p "${WORK}" "${OUT}"
+CMDLINE='console=ttyS0,115200 console=tty0 init=/init'
 
 echo "==> install dependencies"
 sudo apt-get update
 sudo DEBIAN_FRONTEND=noninteractive apt-get install -y \
   build-essential bc bison flex libssl-dev libelf-dev dwarves pahole \
-  cpio xz-utils gzip wget tar fakeroot kmod libncurses-dev binutils gcc make \
+  cpio xz-utils gzip curl tar fakeroot kmod libncurses-dev binutils gcc make \
   file zstd bzip2 perl rsync
+
+echo "==> clean"
+rm -rf "${WORK}" "${OUT}"
+mkdir -p "${WORK}" "${OUT}"
 
 ###############################################################################
 # BusyBox
@@ -37,7 +37,7 @@ sudo DEBIAN_FRONTEND=noninteractive apt-get install -y \
 cd "${WORK}"
 
 echo "==> download busybox"
-wget -O "${BUSYBOX_TAR}" "${BUSYBOX_URL}"
+curl -o "${BUSYBOX_TAR}" "${BUSYBOX_URL}"
 
 echo "==> extract busybox"
 tar xf "${BUSYBOX_TAR}"
@@ -74,12 +74,11 @@ mount -t tmpfs tmpfs /tmp
 
 echo
 echo "=================================="
-echo " Mini-Linux"
-echo " https://github.com/xhdndmm/mini-linux "
+echo "Mini-Linux"
+echo "https://github.com/xhdndmm/mini-linux"
+echo (uname -a)
 echo "=================================="
 echo
-
-uname -a
 
 exec setsid cttyhack /bin/sh
 EOF
@@ -106,7 +105,7 @@ zcat "${WORK}/initramfs.cpio.gz" | cpio -t | grep -E '(^init$|^bin/busybox$|^bin
 cd "${WORK}"
 
 echo "==> download kernel"
-wget -O "${KERNEL_TAR}" "${KERNEL_URL}"
+curl -o "${KERNEL_TAR}" "${KERNEL_URL}"
 
 echo "==> extract kernel"
 tar xf "${KERNEL_TAR}"
@@ -171,12 +170,13 @@ cp "${KERNEL_IMAGE}" "${OUT}/BOOTX64.EFI"
 mkdir -p "${OUT}/esp/EFI/BOOT"
 cp "${OUT}/BOOTX64.EFI" "${OUT}/esp/EFI/BOOT/BOOTX64.EFI"
 
-echo "==> verify"
-file "${OUT}/BOOTX64.EFI"
-ls -lh "${OUT}/BOOTX64.EFI"
-sha256sum "${OUT}/BOOTX64.EFI"
-
 echo
 echo "========================================"
 echo " BUILD SUCCESS"
 echo "========================================"
+
+echo "==> verify"
+file "${OUT}/BOOTX64.EFI"
+ls -lh "${OUT}/BOOTX64.EFI"
+sha256sum "${OUT}/BOOTX64.EFI"
+md5sum "${OUT}/BOOTX64.EFI"
