@@ -8,8 +8,8 @@ WORK="${ROOT}/work"
 OUT="${ROOT}/out"
 JOBS="$(nproc)"
 
-KERNEL_VERSION="6.1.175"
-BUSYBOX_VERSION="1.36.1"
+KERNEL_VERSION="6.18.34"
+BUSYBOX_VERSION="1.37.0"
 
 KERNEL_TAR="linux-${KERNEL_VERSION}.tar.xz"
 KERNEL_URL="https://cdn.kernel.org/pub/linux/kernel/v6.x/${KERNEL_TAR}"
@@ -77,6 +77,7 @@ echo "=================================="
 echo "Mini-Linux"
 echo "https://github.com/xhdndmm/mini-linux"
 uname -a
+busybox
 echo "=================================="
 echo
 
