@@ -17,7 +17,7 @@ KERNEL_URL="https://cdn.kernel.org/pub/linux/kernel/v6.x/${KERNEL_TAR}"
 BUSYBOX_TAR="busybox-${BUSYBOX_VERSION}.tar.bz2"
 BUSYBOX_URL="https://busybox.net/downloads/${BUSYBOX_TAR}"
 
-CMDLINE='console=ttyS0,115200 console=tty0 init=/init'
+CMDLINE='console=tty0 console=ttyS0,115200n8 loglevel=8 init=/init'
 
 echo "==> install dependencies"
 sudo apt-get update
@@ -66,18 +66,21 @@ make CONFIG_PREFIX="${WORK}/rootfs" install
 echo "==> write init"
 cat > "${WORK}/rootfs/init" <<'EOF'
 #!/bin/sh
+set -eu
 
-mount -t devtmpfs devtmpfs /dev
+mount -t devtmpfs devtmpfs /dev 2>/dev/null || true
 mount -t proc proc /proc
 mount -t sysfs sysfs /sys
 mount -t tmpfs tmpfs /tmp
+
+[ -c /dev/console ] || mknod -m 600 /dev/console c 5 1 || true
+[ -c /dev/null ] || mknod -m 666 /dev/null c 1 3 || true
 
 echo
 echo "=================================="
 echo "Mini-Linux"
 echo "https://github.com/xhdndmm/mini-linux"
 uname -a
-busybox
 echo "=================================="
 echo
 
@@ -85,7 +88,6 @@ exec setsid cttyhack /bin/sh
 EOF
 chmod +x "${WORK}/rootfs/init"
 
-# fallback device nodes, in case devtmpfs is not available early enough
 sudo mknod -m 600 "${WORK}/rootfs/dev/console" c 5 1 || true
 sudo mknod -m 666 "${WORK}/rootfs/dev/null" c 1 3 || true
 
@@ -121,10 +123,10 @@ scripts/config --enable EFI_STUB
 
 scripts/config --enable BLK_DEV_INITRD
 scripts/config --enable RD_GZIP
+scripts/config --set-str INITRAMFS_SOURCE "${WORK}/initramfs.cpio.gz"
 
 scripts/config --enable DEVTMPFS
 scripts/config --enable DEVTMPFS_MOUNT
-
 scripts/config --enable TMPFS
 scripts/config --enable TMPFS_POSIX_ACL
 
@@ -135,22 +137,32 @@ scripts/config --enable UNIX
 scripts/config --enable TTY
 scripts/config --enable VT
 scripts/config --enable VT_CONSOLE
-
-scripts/config --enable FRAMEBUFFER
-scripts/config --enable FB_EFI
 scripts/config --enable FRAMEBUFFER_CONSOLE
-scripts/config --enable FONT_SUPPORT
+
+scripts/config --enable FB
+scripts/config --enable FB_EFI
+scripts/config --enable DRM
+scripts/config --enable DRM_KMS_HELPER
+scripts/config --enable DRM_SIMPLEDRM
+scripts/config --enable SYSFB_SIMPLEFB
 
 scripts/config --enable SERIAL_8250
 scripts/config --enable SERIAL_8250_CONSOLE
 
-# Built-in kernel command line: critical for direct EFI boot.
+scripts/config --enable INPUT
+scripts/config --enable INPUT_KEYBOARD
+scripts/config --enable SERIO
+scripts/config --enable SERIO_I8042
+scripts/config --enable KEYBOARD_ATKBD
+scripts/config --enable MOUSE_PS2
+scripts/config --enable HID
+scripts/config --enable HID_GENERIC
+scripts/config --enable USB_HID
+
 scripts/config --enable CMDLINE_BOOL
 scripts/config --set-str CMDLINE "${CMDLINE}"
-scripts/config --enable CMDLINE_OVERRIDE
-
-# Embed initramfs
-scripts/config --set-str INITRAMFS_SOURCE "${WORK}/initramfs.cpio.gz"
+scripts/config --enable CMDLINE_OVERRIDE || true
+scripts/config --enable CMDLINE_FORCE || true
 
 make olddefconfig
 
@@ -166,10 +178,6 @@ fi
 
 echo "==> prepare EFI output"
 cp "${KERNEL_IMAGE}" "${OUT}/BOOTX64.EFI"
-
-# Optional: ready-to-boot ESP layout for local testing
-mkdir -p "${OUT}/esp/EFI/BOOT"
-cp "${OUT}/BOOTX64.EFI" "${OUT}/esp/EFI/BOOT/BOOTX64.EFI"
 
 echo
 echo "========================================"
