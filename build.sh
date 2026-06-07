@@ -116,10 +116,12 @@ tar xf "${KERNEL_TAR}"
 cd "${WORK}/linux-${KERNEL_VERSION}"
 
 echo "==> configure kernel"
+echo "==> configure kernel"
 make defconfig
 
 scripts/config --enable EFI
 scripts/config --enable EFI_STUB
+scripts/config --enable EFI_VARS
 
 scripts/config --enable BLK_DEV_INITRD
 scripts/config --enable RD_GZIP
@@ -129,28 +131,42 @@ scripts/config --enable DEVTMPFS
 scripts/config --enable DEVTMPFS_MOUNT
 scripts/config --enable TMPFS
 scripts/config --enable TMPFS_POSIX_ACL
+scripts/config --enable UNIX
 
 scripts/config --enable BINFMT_ELF
 scripts/config --enable BINFMT_SCRIPT
-scripts/config --enable UNIX
 
 scripts/config --enable TTY
 scripts/config --enable VT
 scripts/config --enable VT_CONSOLE
-scripts/config --enable FRAMEBUFFER_CONSOLE
+scripts/config --enable DUMMY_CONSOLE
+scripts/config --enable VGA_CONSOLE
 
-scripts/config --enable FB
-scripts/config --enable FB_EFI
 scripts/config --enable DRM
 scripts/config --enable DRM_KMS_HELPER
 scripts/config --enable DRM_SIMPLEDRM
+scripts/config --enable DRM_FBDEV_EMULATION
+
+scripts/config --enable SYSFB
 scripts/config --enable SYSFB_SIMPLEFB
+
+scripts/config --enable FB
+scripts/config --enable FB_CORE
+scripts/config --enable FB_CFB_FILLRECT
+scripts/config --enable FB_CFB_COPYAREA
+scripts/config --enable FB_CFB_IMAGEBLIT
+scripts/config --enable FB_EFI
+scripts/config --enable FB_VESA
+
+scripts/config --enable FRAMEBUFFER_CONSOLE
+scripts/config --enable FRAMEBUFFER_CONSOLE_DETECT_PRIMARY
 
 scripts/config --enable SERIAL_8250
 scripts/config --enable SERIAL_8250_CONSOLE
 
 scripts/config --enable INPUT
 scripts/config --enable INPUT_KEYBOARD
+scripts/config --enable INPUT_MOUSEDEV
 scripts/config --enable SERIO
 scripts/config --enable SERIO_I8042
 scripts/config --enable KEYBOARD_ATKBD
@@ -159,10 +175,15 @@ scripts/config --enable HID
 scripts/config --enable HID_GENERIC
 scripts/config --enable USB_HID
 
+scripts/config --enable USB
+scripts/config --enable USB_XHCI_HCD
+scripts/config --enable USB_EHCI_HCD
+scripts/config --enable USB_OHCI_HCD
+
 scripts/config --enable CMDLINE_BOOL
 scripts/config --set-str CMDLINE "${CMDLINE}"
 scripts/config --enable CMDLINE_OVERRIDE || true
-scripts/config --enable CMDLINE_FORCE || true
+scripts/config --enable CMDLINE_FORCE    || true
 
 make olddefconfig
 
@@ -186,6 +207,9 @@ echo "========================================"
 
 echo "==> verify"
 file "${OUT}/BOOTX64.EFI"
+echo
 ls -lh "${OUT}/BOOTX64.EFI"
+echo
 sha256sum "${OUT}/BOOTX64.EFI"
+echo
 md5sum "${OUT}/BOOTX64.EFI"
