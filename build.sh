@@ -8,8 +8,8 @@ WORK="${ROOT}/work"
 OUT="${ROOT}/out"
 JOBS="$(nproc)"
 
-KERNEL_VERSION="6.18.33"
-BUSYBOX_VERSION="1.37.0"
+KERNEL_VERSION="6.1.175"
+BUSYBOX_VERSION="1.36.1"
 
 KERNEL_TAR="linux-${KERNEL_VERSION}.tar.xz"
 KERNEL_URL="https://cdn.kernel.org/pub/linux/kernel/v6.x/${KERNEL_TAR}"
@@ -17,7 +17,7 @@ KERNEL_URL="https://cdn.kernel.org/pub/linux/kernel/v6.x/${KERNEL_TAR}"
 BUSYBOX_TAR="busybox-${BUSYBOX_VERSION}.tar.bz2"
 BUSYBOX_URL="https://busybox.net/downloads/${BUSYBOX_TAR}"
 
-CMDLINE='console=tty0 init=/init'
+CMDLINE='console=ttyS0,115200 console=tty0 init=/init'
 
 echo "==> install dependencies"
 sudo apt-get update
@@ -140,8 +140,8 @@ scripts/config --enable FB_EFI
 scripts/config --enable FRAMEBUFFER_CONSOLE
 scripts/config --enable FONT_SUPPORT
 
-#scripts/config --enable SERIAL_8250
-#scripts/config --enable SERIAL_8250_CONSOLE
+scripts/config --enable SERIAL_8250
+scripts/config --enable SERIAL_8250_CONSOLE
 
 # Built-in kernel command line: critical for direct EFI boot.
 scripts/config --enable CMDLINE_BOOL
