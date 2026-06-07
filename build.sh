@@ -17,7 +17,7 @@ KERNEL_URL="https://cdn.kernel.org/pub/linux/kernel/v6.x/${KERNEL_TAR}"
 BUSYBOX_TAR="busybox-${BUSYBOX_VERSION}.tar.bz2"
 BUSYBOX_URL="https://busybox.net/downloads/${BUSYBOX_TAR}"
 
-CMDLINE='console=tty0 console=ttyS0,115200n8 loglevel=8 init=/init'
+CMDLINE='console=ttyS0,115200n8 console=tty0 loglevel=8 init=/init'
 
 echo "==> install dependencies"
 sudo apt-get update
@@ -47,10 +47,8 @@ cd "busybox-${BUSYBOX_VERSION}"
 echo "==> configure busybox"
 make defconfig
 
-# static binary
 sed -i 's/^# CONFIG_STATIC is not set/CONFIG_STATIC=y/' .config
 
-# trim a little
 sed -i 's/^CONFIG_TC=y/# CONFIG_TC is not set/' .config
 sed -i 's/^CONFIG_FEATURE_IPV6=y/# CONFIG_FEATURE_IPV6 is not set/' .config
 
