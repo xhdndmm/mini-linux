@@ -9,7 +9,7 @@ OUT="${ROOT}/out"
 JOBS="$(nproc)"
 
 KERNEL_VERSION="6.18.35"
-BUSYBOX_VERSION="1.37.0"
+BUSYBOX_VERSION="1.38.0"
 
 KERNEL_TAR="linux-${KERNEL_VERSION}.tar.xz"
 KERNEL_URL="https://cdn.kernel.org/pub/linux/kernel/v6.x/${KERNEL_TAR}"
@@ -183,6 +183,12 @@ scripts/config --set-str CMDLINE "${CMDLINE}"
 scripts/config --enable CMDLINE_OVERRIDE || true
 scripts/config --enable CMDLINE_FORCE    || true
 
+scripts/config --enable NVME_CORE || true
+scripts/config --enable NVME_PCI || true
+scripts/config --enable BLK_DEV_NVME || true
+scripts/config --enable NVME_MULTIPATH || true
+scripts/config --enable PCI || true
+
 make olddefconfig
 
 echo "==> build kernel"
@@ -208,6 +214,6 @@ file "${OUT}/BOOTX64.EFI"
 echo
 ls -lh "${OUT}/BOOTX64.EFI"
 echo
-sha256sum "${OUT}/BOOTX64.EFI"
+sha256sum "${OUT}/BOOTX64.EFI" >> "${OUT}/BOOTX64.EFI.sha256"
 echo
-md5sum "${OUT}/BOOTX64.EFI"
+md5sum "${OUT}/BOOTX64.EFI" >> "${OUT}/BOOTX64.EFI.md5"
