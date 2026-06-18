@@ -8,7 +8,7 @@ WORK="${ROOT}/work"
 OUT="${ROOT}/out"
 JOBS="$(nproc)"
 
-KERNEL_VERSION="6.18.34"
+KERNEL_VERSION="6.18.35"
 BUSYBOX_VERSION="1.37.0"
 
 KERNEL_TAR="linux-${KERNEL_VERSION}.tar.xz"
