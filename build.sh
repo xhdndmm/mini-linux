@@ -8,7 +8,7 @@ WORK="${ROOT}/work"
 OUT="${ROOT}/out"
 JOBS="$(nproc)"
 
-KERNEL_VERSION="6.18.35"
+KERNEL_VERSION="6.18.38"
 BUSYBOX_VERSION="1.38.0"
 
 KERNEL_TAR="linux-${KERNEL_VERSION}.tar.xz"
@@ -66,13 +66,13 @@ cat > "${WORK}/rootfs/init" <<'EOF'
 #!/bin/sh
 set -eu
 
-mount -t devtmpfs devtmpfs /dev 2>/dev/null || true
+mount -t devtmpfs devtmpfs /dev 2>/dev/null  
 mount -t proc proc /proc
 mount -t sysfs sysfs /sys
 mount -t tmpfs tmpfs /tmp
 
-[ -c /dev/console ] || mknod -m 600 /dev/console c 5 1 || true
-[ -c /dev/null ] || mknod -m 666 /dev/null c 1 3 || true
+[ -c /dev/console ] || mknod -m 600 /dev/console c 5 1  
+[ -c /dev/null ] || mknod -m 666 /dev/null c 1 3  
 
 echo
 echo "=================================="
@@ -86,8 +86,8 @@ exec setsid cttyhack /bin/sh
 EOF
 chmod +x "${WORK}/rootfs/init"
 
-sudo mknod -m 600 "${WORK}/rootfs/dev/console" c 5 1 || true
-sudo mknod -m 666 "${WORK}/rootfs/dev/null" c 1 3 || true
+sudo mknod -m 600 "${WORK}/rootfs/dev/console" c 5 1  
+sudo mknod -m 666 "${WORK}/rootfs/dev/null" c 1 3  
 
 echo "==> pack initramfs"
 cd "${WORK}/rootfs"
@@ -97,7 +97,7 @@ find . -print0 \
   > "${WORK}/initramfs.cpio.gz"
 
 echo "==> verify initramfs contents"
-zcat "${WORK}/initramfs.cpio.gz" | cpio -t | grep -E '(^init$|^bin/busybox$|^bin/sh$)' || true
+zcat "${WORK}/initramfs.cpio.gz" | cpio -t | grep -E '(^init$|^bin/busybox$|^bin/sh$)'  
 
 ###############################################################################
 # Kernel
@@ -180,14 +180,14 @@ scripts/config --enable USB_OHCI_HCD
 
 scripts/config --enable CMDLINE_BOOL
 scripts/config --set-str CMDLINE "${CMDLINE}"
-scripts/config --enable CMDLINE_OVERRIDE || true
-scripts/config --enable CMDLINE_FORCE    || true
+scripts/config --enable CMDLINE_OVERRIDE  
+scripts/config --enable CMDLINE_FORCE     
 
-scripts/config --enable NVME_CORE || true
-scripts/config --enable NVME_PCI || true
-scripts/config --enable BLK_DEV_NVME || true
-scripts/config --enable NVME_MULTIPATH || true
-scripts/config --enable PCI || true
+scripts/config --enable NVME_CORE  
+scripts/config --enable NVME_PCI  
+scripts/config --enable BLK_DEV_NVME  
+scripts/config --enable NVME_MULTIPATH  
+scripts/config --enable PCI  
 
 make olddefconfig
 
