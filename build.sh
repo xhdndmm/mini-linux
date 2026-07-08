@@ -8,6 +8,36 @@ WORK="${ROOT}/work"
 OUT="${ROOT}/out"
 JOBS="$(nproc)"
 
+# =============================================================================
+# architecture selection  (ARCH=x86_64  or  ARCH=arm64,  default: x86_64)
+# =============================================================================
+ARCH="${ARCH:-x86_64}"
+
+case "${ARCH}" in
+  x86_64)
+    CROSS_COMPILE=""
+    KERNEL_IMAGE_REL="arch/x86/boot/bzImage"
+    KERNEL_TARGET="bzImage"
+    KERNEL_DEFCONFIG="defconfig"
+    EFI_OUTPUT_NAME="BOOTX64.EFI"
+    ;;
+  arm64)
+    CROSS_COMPILE="aarch64-linux-gnu-"
+    KERNEL_IMAGE_REL="arch/arm64/boot/Image"
+    KERNEL_TARGET="Image"
+    KERNEL_DEFCONFIG="defconfig"
+    EFI_OUTPUT_NAME="BOOTAA64.EFI"
+    ;;
+  *)
+    echo "ERROR: unsupported ARCH='${ARCH}'" >&2
+    exit 1
+    ;;
+esac
+
+KERNEL_MAKE="make ARCH=${ARCH} CROSS_COMPILE=${CROSS_COMPILE}"
+
+echo "==> building for ARCH=${ARCH}"
+
 KERNEL_VERSION="6.18.38"
 BUSYBOX_VERSION="1.38.0"
 
@@ -25,6 +55,12 @@ sudo DEBIAN_FRONTEND=noninteractive apt-get install -y \
   build-essential bc bison flex libssl-dev libelf-dev dwarves pahole \
   cpio xz-utils gzip curl tar fakeroot kmod libncurses-dev binutils gcc make \
   file zstd bzip2 perl rsync
+
+# cross-compilation toolchain for arm64
+if [[ "${ARCH}" == "arm64" ]]; then
+  sudo DEBIAN_FRONTEND=noninteractive apt-get install -y \
+    crossbuild-essential-arm64
+fi
 
 echo "==> clean"
 rm -rf "${WORK}" "${OUT}"
@@ -114,12 +150,11 @@ tar xf "${KERNEL_TAR}"
 cd "${WORK}/linux-${KERNEL_VERSION}"
 
 echo "==> configure kernel"
-echo "==> configure kernel"
-make defconfig
+${KERNEL_MAKE} ${KERNEL_DEFCONFIG}
 
+# ---- common options (all architectures) ------------------------------------
 scripts/config --enable EFI
 scripts/config --enable EFI_STUB
-scripts/config --enable EFI_VARS
 
 scripts/config --enable BLK_DEV_INITRD
 scripts/config --enable RD_GZIP
@@ -137,8 +172,6 @@ scripts/config --enable BINFMT_SCRIPT
 scripts/config --enable TTY
 scripts/config --enable VT
 scripts/config --enable VT_CONSOLE
-scripts/config --enable DUMMY_CONSOLE
-scripts/config --enable VGA_CONSOLE
 
 scripts/config --enable DRM
 scripts/config --enable DRM_KMS_HELPER
@@ -154,7 +187,6 @@ scripts/config --enable FB_CFB_FILLRECT
 scripts/config --enable FB_CFB_COPYAREA
 scripts/config --enable FB_CFB_IMAGEBLIT
 scripts/config --enable FB_EFI
-scripts/config --enable FB_VESA
 
 scripts/config --enable FRAMEBUFFER_CONSOLE
 scripts/config --enable FRAMEBUFFER_CONSOLE_DETECT_PRIMARY
@@ -165,10 +197,6 @@ scripts/config --enable SERIAL_8250_CONSOLE
 scripts/config --enable INPUT
 scripts/config --enable INPUT_KEYBOARD
 scripts/config --enable INPUT_MOUSEDEV
-scripts/config --enable SERIO
-scripts/config --enable SERIO_I8042
-scripts/config --enable KEYBOARD_ATKBD
-scripts/config --enable MOUSE_PS2
 scripts/config --enable HID
 scripts/config --enable HID_GENERIC
 scripts/config --enable USB_HID
@@ -180,40 +208,75 @@ scripts/config --enable USB_OHCI_HCD
 
 scripts/config --enable CMDLINE_BOOL
 scripts/config --set-str CMDLINE "${CMDLINE}"
-scripts/config --enable CMDLINE_OVERRIDE  
-scripts/config --enable CMDLINE_FORCE     
+scripts/config --enable CMDLINE_OVERRIDE
+scripts/config --enable CMDLINE_FORCE
 
-scripts/config --enable NVME_CORE  
-scripts/config --enable NVME_PCI  
-scripts/config --enable BLK_DEV_NVME  
-scripts/config --enable NVME_MULTIPATH  
-scripts/config --enable PCI  
+# ---- pci / nvme (fixed: added SCSI, BLK_DEV_SD, PCI_MSI, PCIEPORTBUS) -----
+scripts/config --enable PCI
+scripts/config --enable PCI_MSI
+scripts/config --enable PCIEPORTBUS
+scripts/config --enable BLK_DEV_NVME
+scripts/config --enable NVME_CORE
+scripts/config --enable NVME_PCI
 
-make olddefconfig
+# ---- scsi / block (required for full block-layer init) ---------------------
+scripts/config --enable SCSI
+scripts/config --enable BLK_DEV_SD
+
+# ---- virtio (useful for virtual machines) ----------------------------------
+scripts/config --enable VIRTIO
+scripts/config --enable VIRTIO_PCI
+scripts/config --enable VIRTIO_BLK
+scripts/config --enable VIRTIO_NET
+scripts/config --enable VIRTIO_CONSOLE
+
+# ---- architecture-specific options -----------------------------------------
+case "${ARCH}" in
+  x86_64)
+    scripts/config --enable EFI_VARS
+    scripts/config --enable DUMMY_CONSOLE
+    scripts/config --enable VGA_CONSOLE
+    scripts/config --enable FB_VESA
+    scripts/config --enable SERIO
+    scripts/config --enable SERIO_I8042
+    scripts/config --enable KEYBOARD_ATKBD
+    scripts/config --enable MOUSE_PS2
+    ;;
+  arm64)
+    # arm64-specific console / serial
+    scripts/config --enable SERIAL_AMBA_PL011
+    scripts/config --enable SERIAL_AMBA_PL011_CONSOLE
+    # generic PCI host (common on arm64 platforms)
+    scripts/config --enable PCI_HOST_GENERIC
+    scripts/config --enable PCI_HOST_COMMON
+    ;;
+esac
+
+${KERNEL_MAKE} olddefconfig
 
 echo "==> build kernel"
-make -j"${JOBS}" bzImage
+${KERNEL_MAKE} -j"${JOBS}" ${KERNEL_TARGET}
 
-KERNEL_IMAGE="${WORK}/linux-${KERNEL_VERSION}/arch/x86/boot/bzImage"
+KERNEL_IMAGE="${WORK}/linux-${KERNEL_VERSION}/${KERNEL_IMAGE_REL}"
 
 if [[ ! -f "${KERNEL_IMAGE}" ]]; then
-  echo "ERROR: bzImage missing" >&2
+  echo "ERROR: kernel image missing at ${KERNEL_IMAGE}" >&2
   exit 1
 fi
 
 echo "==> prepare EFI output"
-cp "${KERNEL_IMAGE}" "${OUT}/BOOTX64.EFI"
+cp "${KERNEL_IMAGE}" "${OUT}/${EFI_OUTPUT_NAME}"
 
 echo
 echo "========================================"
-echo " BUILD SUCCESS"
+echo " BUILD SUCCESS  (ARCH=${ARCH})"
 echo "========================================"
 
 echo "==> verify"
-file "${OUT}/BOOTX64.EFI"
+file "${OUT}/${EFI_OUTPUT_NAME}"
 echo
-ls -lh "${OUT}/BOOTX64.EFI"
+ls -lh "${OUT}/${EFI_OUTPUT_NAME}"
 echo
-sha256sum "${OUT}/BOOTX64.EFI" >> "${OUT}/BOOTX64.EFI.sha256"
+sha256sum "${OUT}/${EFI_OUTPUT_NAME}" >> "${OUT}/${EFI_OUTPUT_NAME}.sha256"
 echo
-md5sum "${OUT}/BOOTX64.EFI" >> "${OUT}/BOOTX64.EFI.md5"
+md5sum "${OUT}/${EFI_OUTPUT_NAME}" >> "${OUT}/${EFI_OUTPUT_NAME}.md5"

@@ -6,6 +6,10 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: [x86_64, arm64]
 
     permissions:
       contents: write
@@ -18,19 +22,17 @@ jobs:
         run: uname -a && echo && free -h && echo && df -h && echo && lscpu
 
       - name: build
-        run: chmod +x build.sh && ./build.sh
+        run: chmod +x build.sh && ARCH=${{ matrix.arch }} ./build.sh
 
       - name: generate tag
         id: tag
         run: |
-          echo "tag=build-$(date +%Y%m%d-%H%M%S)" >> $GITHUB_OUTPUT
+          echo "tag=build-${{ matrix.arch }}-$(date +%Y%m%d-%H%M%S)" >> $GITHUB_OUTPUT
 
       - name: release
         uses: softprops/action-gh-release@v3
         with:
           tag_name: ${{ steps.tag.outputs.tag }}
-          name: Build ${{ steps.tag.outputs.tag }}
+          name: Build ${{ matrix.arch }} ${{ steps.tag.outputs.tag }}
           files: |
-            out/BOOTX64.EFI
-            out/BOOTX64.EFI.sha256
-            out/BOOTX64.EFI.md5
+            out/*
