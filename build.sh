@@ -14,7 +14,8 @@ JOBS="$(nproc)"
 ARCH="${ARCH:-x86_64}"
 
 case "${ARCH}" in
-  x86_64)
+  x86_64|amd64)
+    ARCH="x86_64"
     CROSS_COMPILE=""
     KERNEL_IMAGE_REL="arch/x86/boot/bzImage"
     KERNEL_TARGET="bzImage"
