@@ -4,9 +4,8 @@ on:
   workflow_dispatch:
 
 jobs:
-  strategy:
-    matrix:
-      os: [windows-2025-vs2026, ubuntu-24.04]
+  build:
+    runs-on: [ubuntu-26.04,ubuntu-26.04-arm]
 
     permissions:
       contents: write
