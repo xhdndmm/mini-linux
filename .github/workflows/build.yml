@@ -16,9 +16,6 @@ jobs:
 
     runs-on: ${{ matrix.runner }}
 
-    permissions:
-      contents: write
-
     steps:
       - name: checkout
         uses: actions/checkout@v7
@@ -29,15 +26,46 @@ jobs:
       - name: build
         run: chmod +x build.sh && ARCH=${{ matrix.arch }} ./build.sh
 
+      - name: rename output files with arch suffix
+        run: |
+          cd out
+          for f in *; do
+            mv "${f}" "${f%.*}-${{ matrix.arch }}.${f##*.}"
+          done
+
+      - name: upload artifact
+        uses: actions/upload-artifact@v5
+        with:
+          name: build-${{ matrix.arch }}
+          path: out/*
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+
+    steps:
+      - name: download all artifacts
+        uses: actions/download-artifact@v5
+        with:
+          path: out
+          pattern: build-*
+          merge-multiple: true
+
+      - name: list output files
+        run: ls -lh out/
+
       - name: generate tag
         id: tag
         run: |
-          echo "tag=build-${{ matrix.arch }}-$(date +%Y%m%d-%H%M%S)" >> $GITHUB_OUTPUT
+          echo "tag=build-$(date +%Y%m%d-%H%M%S)" >> $GITHUB_OUTPUT
 
       - name: release
         uses: softprops/action-gh-release@v3
         with:
           tag_name: ${{ steps.tag.outputs.tag }}
-          name: Build ${{ matrix.arch }} ${{ steps.tag.outputs.tag }}
+          name: Build ${{ steps.tag.outputs.tag }}
           files: |
             out/*
