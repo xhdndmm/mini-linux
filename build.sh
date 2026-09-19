@@ -1,4 +1,8 @@
 #!/usr/bin/env bash
+#MIT License
+#Copyright (c) 2026 喜欢电脑的猫咪
+#[https://github.com/xhdndmm/mini-linux]
+
 set -euo pipefail
 
 trap 'echo "ERROR at line $LINENO" >&2' ERR
@@ -39,7 +43,7 @@ KERNEL_MAKE="make ARCH=${ARCH} CROSS_COMPILE=${CROSS_COMPILE}"
 
 echo "==> building for ARCH=${ARCH}"
 
-KERNEL_VERSION="6.18.52"
+KERNEL_VERSION="7.2.6"
 BUSYBOX_VERSION="1.38.0"
 
 KERNEL_TAR="linux-${KERNEL_VERSION}.tar.xz"
@@ -109,6 +113,8 @@ mount -t tmpfs tmpfs /tmp
 
 [ -c /dev/console ] || mknod -m 600 /dev/console c 5 1  
 [ -c /dev/null ] || mknod -m 666 /dev/null c 1 3  
+
+clear
 
 echo
 echo "=================================="
