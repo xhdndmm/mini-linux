@@ -47,7 +47,7 @@ KERNEL_VERSION="7.2.6"
 BUSYBOX_VERSION="1.38.0"
 
 KERNEL_TAR="linux-${KERNEL_VERSION}.tar.xz"
-KERNEL_URL="https://cdn.kernel.org/pub/linux/kernel/v6.x/${KERNEL_TAR}"
+KERNEL_URL="https://cdn.kernel.org/pub/linux/kernel/v7.x/${KERNEL_TAR}"
 
 BUSYBOX_TAR="busybox-${BUSYBOX_VERSION}.tar.bz2"
 BUSYBOX_URL="https://busybox.net/downloads/${BUSYBOX_TAR}"
