@@ -39,7 +39,7 @@ KERNEL_MAKE="make ARCH=${ARCH} CROSS_COMPILE=${CROSS_COMPILE}"
 
 echo "==> building for ARCH=${ARCH}"
 
-KERNEL_VERSION="6.18.41"
+KERNEL_VERSION="6.18.52"
 BUSYBOX_VERSION="1.38.0"
 
 KERNEL_TAR="linux-${KERNEL_VERSION}.tar.xz"
@@ -101,7 +101,6 @@ make CONFIG_PREFIX="${WORK}/rootfs" install
 echo "==> write init"
 cat > "${WORK}/rootfs/init" <<'EOF'
 #!/bin/sh
-set -eu
 
 mount -t devtmpfs devtmpfs /dev 2>/dev/null  
 mount -t proc proc /proc
